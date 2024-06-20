@@ -10,7 +10,9 @@ class OrderBookRouter (vertx: Vertx?) : RouterImpl(vertx) {
   init {
     val orderBookController = OrderBookController(OrderBookService(OrderBookRepository()))
 
-    router["/"].handler(orderBookController::listOrders)
+    router["/:currencyPair/orderbook"].handler(orderBookController::getOrderBook)
+    router["/:currencyPair/tradehistory"].handler(orderBookController::getTradeHistory)
+    router.post("/orders/limit").handler(orderBookController::submitLimitOrder)
   }
 
   fun getOrderBookRouter(): Router {

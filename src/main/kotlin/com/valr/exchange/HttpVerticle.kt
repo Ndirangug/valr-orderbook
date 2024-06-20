@@ -19,8 +19,8 @@ class HttpVerticle : AbstractVerticle() {
     val userRouter = UserRouter(vertx).getUserRouter()
     val orderRouter = OrderBookRouter(vertx).getOrderBookRouter()
 
-    baseRouter.mountSubRouter("/user", userRouter)
-    baseRouter.mountSubRouter("/order", orderRouter)
+    baseRouter.mountSubRouter("/api/v1/user", userRouter)
+    baseRouter.mountSubRouter("/api/v1", orderRouter)
 
     vertx.createHttpServer().requestHandler(baseRouter).listen(8000) { ar: AsyncResult<HttpServer?> ->
       if (ar.succeeded()) {
