@@ -1,25 +1,28 @@
 package com.valr.exchange
 
-import io.vertx.core.AbstractVerticle
-import io.vertx.core.Promise
+import io.vertx.core.*
 
 class MainVerticle : AbstractVerticle() {
 
-  override fun start(startPromise: Promise<Void>) {
-    vertx
-      .createHttpServer()
-      .requestHandler { req ->
-        req.response()
-          .putHeader("content-type", "text/plain")
-          .end("Hello from Vert.x!")
+  override fun start(startPromise: Promise<Void?>) {
+    vertx.deployVerticle(HttpVerticle::class.java.name) { event: AsyncResult<String?> ->
+      if (event.succeeded()) {
+        startPromise.complete()
+      } else {
+        startPromise.fail(event.cause())
       }
-      .listen(8888) { http ->
-        if (http.succeeded()) {
-          startPromise.complete()
-          println("HTTP server started on port 8888")
-        } else {
-          startPromise.fail(http.cause());
-        }
+    }
+  }
+
+  fun deployVerticle(verticleName: String?): Future<Void> {
+    val asyncResult = Promise.promise<Void>()
+    vertx.deployVerticle(verticleName) { event: AsyncResult<String?> ->
+      if (event.succeeded()) {
+        asyncResult.complete()
+      } else {
+        asyncResult.fail(event.cause())
       }
+    }
+    return asyncResult.future();
   }
 }
