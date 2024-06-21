@@ -40,7 +40,7 @@ class OrderBookRepository(val eventBus: EventBus) {
       message
     ).onComplete() {
       if (it.succeeded()) {
-        result.complete(it.result().body().payload as CurrencyOrderBook)
+        result.complete(it.result().body().payload as CurrencyOrderBook?)
       } else {
         result.fail(it.cause())
       }

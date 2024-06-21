@@ -23,21 +23,22 @@ sealed class OrderBookConsumerPayload {
     @JsonProperty("postOnly") val postOnly: Boolean,
     @JsonProperty("customerOrderId") val customerOrderId: String,
     @JsonProperty("timeInForce") val timeInForce: String
-) : OrderBookConsumerPayload()
-
+  ) : OrderBookConsumerPayload()
 
 
   data class Order(
     val id: String,
     val side: OrderSide,
-    val quantity: Double,
+    var quantity: Double,
     val price: Double,
     val currencyPair: String,
     val orderCount: Int,
-    var isOpen: Boolean,
     val userId: String,
     val createdAt: Long,
     val updatedAt: Long
-):OrderBookConsumerPayload()
+  ) : OrderBookConsumerPayload() {
+    val isOpen: Boolean
+      get() = quantity > 0.0
+  }
 }
 
