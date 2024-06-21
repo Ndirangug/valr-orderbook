@@ -1,5 +1,7 @@
 package com.valr.exchange.orderbook
 
+import com.valr.exchange.CurrencyOrderBook
+import com.valr.exchange.orderbook.models.OrderBookConsumerPayload
 import io.vertx.core.json.Json
 import io.vertx.ext.web.RoutingContext
 import com.valr.exchange.orderbook.models.OrderBookConsumerPayload.LimitOrderRequest as LimitOrderRequest
@@ -12,7 +14,7 @@ class OrderBookController(private val orderBookService: OrderBookService) {
     val currencyPair = context.request().getParam("currencyPair")
     orderBookService.getOrderBook(currencyPair).onComplete {
       if (it.succeeded()) {
-        val result = it.result()
+        val result = it.result() as CurrencyOrderBook
         if (result != null) {
           context.response().end(Json.encode(result))
         } else {
@@ -44,7 +46,7 @@ class OrderBookController(private val orderBookService: OrderBookService) {
     val limitOrderRequest = context.body().asJsonObject().mapTo(LimitOrderRequest::class.java)
     orderBookService.submitLimitOrder(limitOrderRequest).onComplete {
        if (it.succeeded()) {
-        val result = it.result()
+        val result = it.result() as Order
         if (result != null) {
           context.response().setStatusCode(201).end(Json.encode(result))
         } else {

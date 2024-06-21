@@ -1,9 +1,6 @@
 package com.valr.exchange.orderbook
 
-import com.valr.exchange.EventBusAddress
-import com.valr.exchange.HttpVerticle
-import com.valr.exchange.OrderBookActions
-import com.valr.exchange.OrderBookConsumerMessage
+import com.valr.exchange.*
 import com.valr.exchange.orderbook.models.OrderBookConsumerMessageCodec
 import com.valr.exchange.orderbook.models.OrderBookConsumerPayload
 import io.vertx.core.Future
@@ -26,11 +23,29 @@ class OrderBookRepository(val eventBus: EventBus) {
     ).onComplete() {
       if (it.succeeded()) {
         result.complete(it.result().body().payload as Order)
-      }else{
+      } else {
         result.fail(it.cause())
       }
     };
 
     return result.future();
+  }
+
+  fun getOrderBook(currencyPair: String): Future<CurrencyOrderBook> {
+    val result = Promise.promise<CurrencyOrderBook>()
+
+    val message = OrderBookConsumerMessage(OrderBookActions.fetch_orderbook, currencyPair)
+    eventBus.request<OrderBookConsumerMessage<String>>(
+      EventBusAddress.orderbook_consumer.name,
+      message
+    ).onComplete() {
+      if (it.succeeded()) {
+        result.complete(it.result().body().payload as CurrencyOrderBook)
+      } else {
+        result.fail(it.cause())
+      }
+    };
+    return result.future()
+
   }
 }

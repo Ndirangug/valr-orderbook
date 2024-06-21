@@ -13,6 +13,7 @@ import kotlin.collections.HashMap
 
 typealias OrderBooksStore = HashMap<String, HashMap<String, Any>>
 typealias OrdersList = MutableList<Order>
+typealias CurrencyOrderBook = HashMap<String, Any>
 
 enum class EventBusAddress {
   orderbook_consumer
@@ -20,7 +21,7 @@ enum class EventBusAddress {
 
 enum class OrderBookActions {
   save,
-  return_saved
+  fetch_orderbook
 }
 
 data class OrderBookConsumerMessage<T>(val action: OrderBookActions, val payload: T)
@@ -59,7 +60,13 @@ class PersistenceVerticle : AbstractVerticle() {
               newOrder = newOrder
             )
 
-            message.reply(OrderBookConsumerMessage(action = OrderBookActions.return_saved, newOrder))
+            message.reply(OrderBookConsumerMessage(action = OrderBookActions.save, newOrder))
+          }
+
+          OrderBookActions.fetch_orderbook -> {
+            val currencyPair = message.body().payload as String
+            val currencyOrderBook = orderbook[currencyPair]
+            message.reply(OrderBookConsumerMessage(action = OrderBookActions.fetch_orderbook, currencyOrderBook))
           }
 
           else -> {}
