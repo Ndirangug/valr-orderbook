@@ -4,11 +4,11 @@ import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.impl.RouterImpl
 
-class OrderBookRouter (vertx: Vertx?) : RouterImpl(vertx) {
-  val router: Router = Router.router(vertx)
+class OrderBookRouter (vertx: Vertx) : RouterImpl(vertx) {
+  private val router: Router = Router.router(vertx)
 
   init {
-    val orderBookController = OrderBookController(OrderBookService(OrderBookRepository()))
+    val orderBookController = OrderBookController(OrderBookService(OrderBookRepository(vertx.eventBus())))
 
     router["/:currencyPair/orderbook"].handler(orderBookController::getOrderBook)
     router["/:currencyPair/tradehistory"].handler(orderBookController::getTradeHistory)

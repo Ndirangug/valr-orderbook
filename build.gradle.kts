@@ -41,6 +41,7 @@ dependencies {
   testImplementation("junit:junit:4.13.2")
   runtimeOnly("io.netty:netty-resolver-dns-native-macos:4.1.111.Final:osx-x86_64")
   implementation("com.fasterxml.jackson.core:jackson-databind:2.17.1")
+  implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.1")
 }
 
 val compileKotlin: KotlinCompile by tasks

@@ -1,15 +1,22 @@
 package com.valr.exchange
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import io.vertx.core.*
+import io.vertx.core.json.Json
+import io.vertx.core.json.JsonObject
 
 class MainVerticle : AbstractVerticle() {
 
   override fun start(startPromise: Promise<Void?>) {
-    vertx.deployVerticle(HttpVerticle::class.java.name) { event: AsyncResult<String?> ->
-      if (event.succeeded()) {
+    Future.all(
+      deployVerticle(HttpVerticle::class.java.name),
+      deployVerticle(PersistenceVerticle::class.java.name),
+    ).onComplete {
+      if (it.succeeded()) {
         startPromise.complete()
       } else {
-        startPromise.fail(event.cause())
+        startPromise.fail(it.cause())
       }
     }
   }
@@ -25,4 +32,6 @@ class MainVerticle : AbstractVerticle() {
     }
     return asyncResult.future();
   }
+
+
 }
