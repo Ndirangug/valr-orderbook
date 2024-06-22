@@ -68,8 +68,12 @@ class PersistenceVerticle : AbstractVerticle() {
             val currencyPair = message.body().payload as String
             val currencyOrderBook = orderbook[currencyPair]
             val filteredOrderBook =
-              hashMapOf<String, Any>("Asks" to (currencyOrderBook?.get("Asks") as OrdersList).filter { it -> it.isOpen },
-                "Bids" to (currencyOrderBook?.get("Bids") as OrdersList).filter { it -> it.isOpen })
+              hashMapOf<String, Any>(
+                "Asks" to (currencyOrderBook?.get("Asks") as OrdersList).filter { it -> it.isOpen },
+                "Bids" to (currencyOrderBook?.get("Bids") as OrdersList).filter { it -> it.isOpen },
+                "SequenceNumber" to currencyOrderBook?.get("SequenceNumber") as Int,
+                "LastChange" to currencyOrderBook?.get("LastChange") as Long,
+                )
 
             message.reply(OrderBookConsumerMessage(action = OrderBookActions.fetch_orderbook, filteredOrderBook))
           }
