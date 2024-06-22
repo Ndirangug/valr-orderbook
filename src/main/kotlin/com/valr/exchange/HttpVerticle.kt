@@ -13,8 +13,6 @@ import io.vertx.ext.web.handler.BodyHandler
 
 
 class HttpVerticle : AbstractVerticle() {
-
-
   companion object {
     val orderBookConsumerMessageCodec =
       OrderBookConsumerMessageCodec<OrderBookConsumerPayload>(OrderBookConsumerPayload::class.java)

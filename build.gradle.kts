@@ -3,7 +3,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.*
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  kotlin ("jvm") version "1.7.21"
+  kotlin("jvm") version "1.9.24"
   application
   id("com.github.johnrengelman.shadow") version "7.1.2"
 }
@@ -38,7 +38,10 @@ dependencies {
   implementation("io.vertx:vertx-lang-kotlin")
   implementation(kotlin("stdlib-jdk8"))
   testImplementation("io.vertx:vertx-unit")
-  testImplementation("junit:junit:4.13.2")
+  testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+  testImplementation("io.mockk:mockk:1.13.11")
+  testImplementation("io.vertx:vertx-junit5:4.5.8")
   runtimeOnly("io.netty:netty-resolver-dns-native-macos:4.1.111.Final:osx-x86_64")
   implementation("com.fasterxml.jackson.core:jackson-databind:2.17.1")
   implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.1")
@@ -56,12 +59,18 @@ tasks.withType<ShadowJar> {
 }
 
 tasks.withType<Test> {
-  useJUnit()
+  useJUnitPlatform()
   testLogging {
     events = setOf(PASSED, SKIPPED, FAILED)
   }
 }
 
 tasks.withType<JavaExec> {
-  args = listOf("run", mainVerticleName, "--redeploy=$watchForChange", "--launcher-class=$launcherClassName", "--on-redeploy=$doOnChange")
+  args = listOf(
+    "run",
+    mainVerticleName,
+    "--redeploy=$watchForChange",
+    "--launcher-class=$launcherClassName",
+    "--on-redeploy=$doOnChange"
+  )
 }
