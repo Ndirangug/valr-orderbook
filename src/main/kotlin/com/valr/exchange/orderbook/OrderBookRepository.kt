@@ -2,8 +2,9 @@ package com.valr.exchange.orderbook
 
 import com.valr.exchange.*
 import com.valr.exchange.common.models.EventConsumerPayload
-import com.valr.exchange.common.models.LimitOrderRequestModel
-import com.valr.exchange.common.models.Order
+import com.valr.exchange.common.models.EventConsumerMessage
+import com.valr.exchange.orderbook.models.LimitOrderRequestModel
+import com.valr.exchange.orderbook.models.Order
 import io.vertx.core.Future
 
 import io.vertx.core.Promise
@@ -14,8 +15,8 @@ class OrderBookRepository(val eventBus: EventBus) {
   fun saveLimitOrder(orderRequest: LimitOrderRequestModel): Future<Order> {
     val result = Promise.promise<Order>()
 
-    val message = OrderBookConsumerMessage(OrderBookActions.save, orderRequest)
-    eventBus.request<OrderBookConsumerMessage<EventConsumerPayload>>(
+    val message = EventConsumerMessage(OrderBookActions.save, orderRequest)
+    eventBus.request<EventConsumerMessage<EventConsumerPayload>>(
       EventBusAddress.orderbook_consumer.name,
       message
     ).onComplete() {
@@ -32,8 +33,8 @@ class OrderBookRepository(val eventBus: EventBus) {
   fun getOrderBook(currencyPair: String): Future<CurrencyOrderBook> {
     val result = Promise.promise<CurrencyOrderBook>()
 
-    val message = OrderBookConsumerMessage(OrderBookActions.fetch_orderbook, currencyPair)
-    eventBus.request<OrderBookConsumerMessage<String>>(
+    val message = EventConsumerMessage(OrderBookActions.fetch_orderbook, currencyPair)
+    eventBus.request<EventConsumerMessage<String>>(
       EventBusAddress.orderbook_consumer.name,
       message
     ).onComplete() {

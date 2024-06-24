@@ -1,7 +1,8 @@
-package com.valr.exchange.common.models
+package com.valr.exchange.orderbook.models
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.valr.exchange.common.models.EventConsumerPayload
 
 data class LimitOrderRequestModel @JsonCreator constructor(
   @JsonProperty("side") val side: String,

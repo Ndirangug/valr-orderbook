@@ -1,8 +1,8 @@
 package com.valr.exchange.orderbook
 
 import com.valr.exchange.CurrencyOrderBook
-import com.valr.exchange.common.models.LimitOrderRequestModel
-import com.valr.exchange.common.models.Order
+import com.valr.exchange.orderbook.models.LimitOrderRequestModel
+import com.valr.exchange.orderbook.models.Order
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.RoutingContext

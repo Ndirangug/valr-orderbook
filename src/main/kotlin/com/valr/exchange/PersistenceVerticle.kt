@@ -1,9 +1,13 @@
 package com.valr.exchange
 
-import com.valr.exchange.common.models.EventConsumerPayload
-import com.valr.exchange.common.models.LimitOrderRequestModel
-import com.valr.exchange.common.models.Order
-import com.valr.exchange.common.models.OrderSide
+import com.valr.exchange.auth.UserActions
+import com.valr.exchange.auth.models.User
+import com.valr.exchange.auth.models.UserRequestModel
+import com.valr.exchange.common.models.*
+import com.valr.exchange.orderbook.OrderBookActions
+import com.valr.exchange.orderbook.models.LimitOrderRequestModel
+import com.valr.exchange.orderbook.models.Order
+import com.valr.exchange.orderbook.models.OrderSide
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.core.eventbus.EventBus
@@ -17,26 +21,64 @@ typealias OrdersList = MutableList<Order>
 typealias CurrencyOrderBook = HashMap<String, Any>
 
 enum class EventBusAddress {
-  orderbook_consumer
+  orderbook_consumer,
+  auth_consumer
 }
-
-enum class OrderBookActions {
-  save,
-  fetch_orderbook,
-  fetch_orderhistory
-}
-
-data class OrderBookConsumerMessage<T>(val action: OrderBookActions, val payload: T)
 
 class PersistenceVerticle : AbstractVerticle() {
+  val users: MutableList<User> = mutableListOf()
   val orderbook: OrderBooksStore = hashMapOf()
   var sequenceIdAccumulator: Long = 0;
 
   override fun start(startPromise: Promise<Void?>) {
     val eventBus: EventBus = vertx.eventBus()
 
+    setupAuthConsumer(eventBus)
+    setupOrderBookConsumer(eventBus)
+
+    startPromise.complete()
+  }
+
+  private fun setupAuthConsumer(eventBus: EventBus) {
+    val authConsumer =
+      eventBus.consumer<EventConsumerMessage<EventConsumerPayload>>(EventBusAddress.auth_consumer.name)
+
+    authConsumer.handler { message ->
+      run {
+        when (message.body().action) {
+          UserActions.signup -> {
+            val userRequest = message.body().payload as UserRequestModel
+            val newUser = User(
+              id = generateUUID(),
+              username = userRequest.username,
+              password = userRequest.password,
+            );
+
+            users.add(newUser)
+
+            message.reply(EventConsumerMessage(action = UserActions.signup, newUser))
+          }
+
+          UserActions.login -> {
+            val userRequest = message.body().payload as UserRequestModel
+            val userExists =
+              users.any { user -> user.username == userRequest.username && user.password == userRequest.password }
+            message.reply(EventConsumerMessage(action = UserActions.login, userExists))
+          }
+
+          UserActions.fetch_users -> {
+            message.reply(EventConsumerMessage(action = UserActions.fetch_users, users))
+          }
+
+          else -> {}
+        }
+      }
+    }
+  }
+
+  private fun setupOrderBookConsumer(eventBus: EventBus) {
     val orderbookConsumer =
-      eventBus.consumer<OrderBookConsumerMessage<EventConsumerPayload>>(EventBusAddress.orderbook_consumer.name)
+      eventBus.consumer<EventConsumerMessage<EventConsumerPayload>>(EventBusAddress.orderbook_consumer.name)
 
     orderbookConsumer.handler { message ->
       run {
@@ -61,7 +103,7 @@ class PersistenceVerticle : AbstractVerticle() {
               newOrder = newOrder
             )
 
-            message.reply(OrderBookConsumerMessage(action = OrderBookActions.save, newOrder))
+            message.reply(EventConsumerMessage(action = OrderBookActions.save, newOrder))
 
             matchOrder(newOrder)
           }
@@ -75,17 +117,15 @@ class PersistenceVerticle : AbstractVerticle() {
                 "Bids" to (currencyOrderBook?.get("Bids") as OrdersList).filter { it -> it.isOpen },
                 "SequenceNumber" to currencyOrderBook?.get("SequenceNumber") as Long,
                 "LastChange" to currencyOrderBook?.get("LastChange") as Long,
-                )
+              )
 
-            message.reply(OrderBookConsumerMessage(action = OrderBookActions.fetch_orderbook, filteredOrderBook))
+            message.reply(EventConsumerMessage(action = OrderBookActions.fetch_orderbook, filteredOrderBook))
           }
 
           else -> {}
         }
       }
     }
-
-    startPromise.complete()
   }
 
 
@@ -102,7 +142,7 @@ class PersistenceVerticle : AbstractVerticle() {
     addOrderToSortedList(orderList, newOrder)
 
     orderbook[currencyPair]?.put("LastChange", Instant.now().toEpochMilli())
-    orderbook[currencyPair]?.put("SequenceNumber",  newOrder.sequenceNumber);
+    orderbook[currencyPair]?.put("SequenceNumber", newOrder.sequenceNumber);
   }
 
   companion object {

@@ -1,4 +1,3 @@
 package com.valr.exchange.common.models
 
-open class EventConsumerPayload
-
+open class EventActions

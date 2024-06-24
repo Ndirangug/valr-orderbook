@@ -1,6 +1,7 @@
 package com.valr.exchange
 
 import com.valr.exchange.auth.UserRouter
+import com.valr.exchange.common.models.EventConsumerMessage
 import com.valr.exchange.orderbook.OrderBookRouter
 import com.valr.exchange.common.models.EventConsumerMessageCodec
 import com.valr.exchange.common.models.EventConsumerPayload
@@ -8,24 +9,20 @@ import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
 import io.vertx.core.Promise
 import io.vertx.core.http.HttpServer
-import io.vertx.ext.auth.PubSecKeyOptions
-import io.vertx.ext.auth.jwt.JWTAuth
-import io.vertx.ext.auth.jwt.JWTAuthOptions
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.BodyHandler
-import io.vertx.ext.web.handler.JWTAuthHandler
 
 
 class HttpVerticle : AbstractVerticle() {
   companion object {
     val eventConsumerMessageCodec =
-      EventConsumerMessageCodec<EventConsumerPayload>(EventConsumerPayload::class.java)
+      EventConsumerMessageCodec(EventConsumerPayload::class.java)
   }
 
   override fun start(startPromise: Promise<Void>) {
     // Add codec to eventbus
     vertx.eventBus().registerDefaultCodec(
-        OrderBookConsumerMessage::class.java as Class<OrderBookConsumerMessage<EventConsumerPayload>>,
+        EventConsumerMessage::class.java as Class<EventConsumerMessage<EventConsumerPayload>>,
         eventConsumerMessageCodec
       )
 

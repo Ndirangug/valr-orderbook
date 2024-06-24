@@ -2,8 +2,9 @@ package com.valr.exchange
 
 import com.valr.exchange.orderbook.OrderBookRepository
 import com.valr.exchange.common.models.EventConsumerPayload
-import com.valr.exchange.common.models.LimitOrderRequestModel
-import com.valr.exchange.common.models.Order
+import com.valr.exchange.common.models.EventConsumerMessage
+import com.valr.exchange.orderbook.models.LimitOrderRequestModel
+import com.valr.exchange.orderbook.models.Order
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -24,7 +25,7 @@ class TestPersistenceVerticle {
     this.vertx = vertx
     vertx.deployVerticle(PersistenceVerticle(), testContext.succeeding {
       vertx.eventBus().registerDefaultCodec(
-        OrderBookConsumerMessage::class.java as Class<OrderBookConsumerMessage<EventConsumerPayload>>,
+        EventConsumerMessage::class.java as Class<EventConsumerMessage<EventConsumerPayload>>,
         HttpVerticle.eventConsumerMessageCodec
       )
       orderBookRepository = OrderBookRepository(vertx.eventBus())

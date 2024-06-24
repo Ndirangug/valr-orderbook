@@ -1,4 +1,6 @@
-package com.valr.exchange.common.models
+package com.valr.exchange.orderbook.models
+
+import com.valr.exchange.common.models.EventConsumerPayload
 
 enum class OrderSide {
   BUY,

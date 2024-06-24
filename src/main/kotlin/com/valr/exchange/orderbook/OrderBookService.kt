@@ -1,7 +1,7 @@
 package com.valr.exchange.orderbook
 import com.valr.exchange.CurrencyOrderBook
-import com.valr.exchange.common.models.LimitOrderRequestModel
-import com.valr.exchange.common.models.Order
+import com.valr.exchange.orderbook.models.LimitOrderRequestModel
+import com.valr.exchange.orderbook.models.Order
 import io.vertx.core.Future
 
 class OrderBookService(private val repository: OrderBookRepository) {
