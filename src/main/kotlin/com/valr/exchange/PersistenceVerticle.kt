@@ -1,8 +1,9 @@
 package com.valr.exchange
 
-import com.valr.exchange.orderbook.models.OrderBookConsumerPayload.Order as Order
-import com.valr.exchange.orderbook.models.OrderBookConsumerPayload
-import com.valr.exchange.orderbook.models.OrderSide
+import com.valr.exchange.common.models.EventConsumerPayload
+import com.valr.exchange.common.models.LimitOrderRequestModel
+import com.valr.exchange.common.models.Order
+import com.valr.exchange.common.models.OrderSide
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.core.eventbus.EventBus
@@ -21,27 +22,27 @@ enum class EventBusAddress {
 
 enum class OrderBookActions {
   save,
-  fetch_orderbook
+  fetch_orderbook,
+  fetch_orderhistory
 }
 
 data class OrderBookConsumerMessage<T>(val action: OrderBookActions, val payload: T)
 
-
 class PersistenceVerticle : AbstractVerticle() {
   val orderbook: OrderBooksStore = hashMapOf()
-
+  var sequenceIdAccumulator: Long = 0;
 
   override fun start(startPromise: Promise<Void?>) {
     val eventBus: EventBus = vertx.eventBus()
 
     val orderbookConsumer =
-      eventBus.consumer<OrderBookConsumerMessage<OrderBookConsumerPayload>>(EventBusAddress.orderbook_consumer.name)
+      eventBus.consumer<OrderBookConsumerMessage<EventConsumerPayload>>(EventBusAddress.orderbook_consumer.name)
 
     orderbookConsumer.handler { message ->
       run {
         when (message.body().action) {
           OrderBookActions.save -> {
-            val orderRequest = message.body().payload as OrderBookConsumerPayload.LimitOrderRequest
+            val orderRequest = message.body().payload as LimitOrderRequestModel
             val newOrder = Order(
               id = generateUUID(),
               side = OrderSide.fromName(orderRequest.side),
@@ -51,7 +52,8 @@ class PersistenceVerticle : AbstractVerticle() {
               orderCount = 0,
               userId = "",
               createdAt = Instant.now().toEpochMilli(),
-              updatedAt = Instant.now().toEpochMilli()
+              updatedAt = Instant.now().toEpochMilli(),
+              sequenceNumber = ++sequenceIdAccumulator,
             );
 
             addOrderToMap(
@@ -71,7 +73,7 @@ class PersistenceVerticle : AbstractVerticle() {
               hashMapOf<String, Any>(
                 "Asks" to (currencyOrderBook?.get("Asks") as OrdersList).filter { it -> it.isOpen },
                 "Bids" to (currencyOrderBook?.get("Bids") as OrdersList).filter { it -> it.isOpen },
-                "SequenceNumber" to currencyOrderBook?.get("SequenceNumber") as Int,
+                "SequenceNumber" to currencyOrderBook?.get("SequenceNumber") as Long,
                 "LastChange" to currencyOrderBook?.get("LastChange") as Long,
                 )
 
@@ -100,8 +102,7 @@ class PersistenceVerticle : AbstractVerticle() {
     addOrderToSortedList(orderList, newOrder)
 
     orderbook[currencyPair]?.put("LastChange", Instant.now().toEpochMilli())
-    val oldSequenceNumber = (orderbook[currencyPair]?.get("SequenceNumber") ?: 0) as Int;
-    orderbook[currencyPair]?.put("SequenceNumber", oldSequenceNumber + 1);
+    orderbook[currencyPair]?.put("SequenceNumber",  newOrder.sequenceNumber);
   }
 
   companion object {

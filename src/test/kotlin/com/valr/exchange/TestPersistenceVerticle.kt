@@ -1,7 +1,9 @@
 package com.valr.exchange
 
 import com.valr.exchange.orderbook.OrderBookRepository
-import com.valr.exchange.orderbook.models.OrderBookConsumerPayload
+import com.valr.exchange.common.models.EventConsumerPayload
+import com.valr.exchange.common.models.LimitOrderRequestModel
+import com.valr.exchange.common.models.Order
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -11,9 +13,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import com.valr.exchange.orderbook.models.OrderBookConsumerPayload.Order as Order
-import com.valr.exchange.orderbook.models.OrderBookConsumerPayload.LimitOrderRequest as LimitOrderRequest
-
 
 @ExtendWith(VertxExtension::class)
 class TestPersistenceVerticle {
@@ -25,8 +24,8 @@ class TestPersistenceVerticle {
     this.vertx = vertx
     vertx.deployVerticle(PersistenceVerticle(), testContext.succeeding {
       vertx.eventBus().registerDefaultCodec(
-        OrderBookConsumerMessage::class.java as Class<OrderBookConsumerMessage<OrderBookConsumerPayload>>,
-        HttpVerticle.orderBookConsumerMessageCodec
+        OrderBookConsumerMessage::class.java as Class<OrderBookConsumerMessage<EventConsumerPayload>>,
+        HttpVerticle.eventConsumerMessageCodec
       )
       orderBookRepository = OrderBookRepository(vertx.eventBus())
       testContext.completeNow()
@@ -37,9 +36,9 @@ class TestPersistenceVerticle {
   fun `test adding an order returns a sorted list in descending order according to amount`(
     vertx: Vertx, testContext: VertxTestContext
   ) {
-    val orderRequest1 = LimitOrderRequest("BUY", 1.0, 100.0, "BTCWLD", false, "", "")
-    val orderRequest2 = LimitOrderRequest("BUY", 1.0, 200.0, "BTCWLD", false, "", "")
-    val orderRequest3 = LimitOrderRequest("BUY", 1.0, 150.0, "BTCWLD", false, "", "")
+    val orderRequest1 = LimitOrderRequestModel("BUY", 1.0, 100.0, "BTCWLD", false, "", "")
+    val orderRequest2 = LimitOrderRequestModel("BUY", 1.0, 200.0, "BTCWLD", false, "", "")
+    val orderRequest3 = LimitOrderRequestModel("BUY", 1.0, 150.0, "BTCWLD", false, "", "")
 
     sendOrder(orderRequest1)
     sendOrder(orderRequest2)
@@ -60,8 +59,8 @@ class TestPersistenceVerticle {
   fun `test that BUY orders are saved under 'Bids' and SELL orders under 'Asks'`(
     vertx: Vertx, testContext: VertxTestContext
   ) {
-    val buyOrderRequest = LimitOrderRequest("BUY", 1.0, 50.0, "BTCWLD", false, "", "")
-    val sellOrderRequest = LimitOrderRequest("SELL", 1.0, 100.0, "BTCWLD", false, "", "")
+    val buyOrderRequest = LimitOrderRequestModel("BUY", 1.0, 50.0, "BTCWLD", false, "", "")
+    val sellOrderRequest = LimitOrderRequestModel("SELL", 1.0, 100.0, "BTCWLD", false, "", "")
 
     sendOrder(buyOrderRequest)
     sendOrder(sellOrderRequest)
@@ -82,10 +81,10 @@ class TestPersistenceVerticle {
 
   @Test
   fun `test matching buy order with existing sell order`(vertx: Vertx, testContext: VertxTestContext) {
-    val sellOrderRequest = LimitOrderRequest("SELL", 1.0, 100.0, "BTCWLD", false, "", "")
+    val sellOrderRequest = LimitOrderRequestModel("SELL", 1.0, 100.0, "BTCWLD", false, "", "")
     sendOrder(sellOrderRequest)
 
-    val buyOrderRequest = LimitOrderRequest("BUY", 1.0, 100.0, "BTCWLD", false, "", "")
+    val buyOrderRequest = LimitOrderRequestModel("BUY", 1.0, 100.0, "BTCWLD", false, "", "")
     sendOrder(buyOrderRequest)
 
     fetchOrderBook("BTCWLD").onComplete() {
@@ -101,10 +100,10 @@ class TestPersistenceVerticle {
 
   @Test
   fun `test matching sell order with existing buy order`(vertx: Vertx, testContext: VertxTestContext) {
-    val buyOrderRequest = LimitOrderRequest("BUY", 1.0, 100.0, "BTCWLD", false, "", "")
+    val buyOrderRequest = LimitOrderRequestModel("BUY", 1.0, 100.0, "BTCWLD", false, "", "")
     sendOrder(buyOrderRequest)
 
-    val sellOrderRequest = LimitOrderRequest("SELL", 1.0, 100.0, "BTCWLD", false, "", "")
+    val sellOrderRequest = LimitOrderRequestModel("SELL", 1.0, 100.0, "BTCWLD", false, "", "")
     sendOrder(sellOrderRequest)
 
     fetchOrderBook("BTCWLD").onComplete() {
@@ -120,14 +119,14 @@ class TestPersistenceVerticle {
 
   @Test
   fun `test matching sell order with multiple  buy orders`(vertx: Vertx, testContext: VertxTestContext) {
-    val buyOrderRequest1 = LimitOrderRequest("BUY", 1.0, 100.0, "BTCWLD", false, "", "")
-    val buyOrderRequest2 = LimitOrderRequest("BUY", 3.0, 100.0, "BTCWLD", false, "", "")
-    val buyOrderRequest3 = LimitOrderRequest("BUY", 2.0, 100.0, "BTCWLD", false, "", "")
+    val buyOrderRequest1 = LimitOrderRequestModel("BUY", 1.0, 100.0, "BTCWLD", false, "", "")
+    val buyOrderRequest2 = LimitOrderRequestModel("BUY", 3.0, 100.0, "BTCWLD", false, "", "")
+    val buyOrderRequest3 = LimitOrderRequestModel("BUY", 2.0, 100.0, "BTCWLD", false, "", "")
     sendOrder(buyOrderRequest1)
     sendOrder(buyOrderRequest2)
     sendOrder(buyOrderRequest3)
 
-    val sellOrderRequest = LimitOrderRequest("SELL", 4.0, 100.0, "BTCWLD", false, "", "")
+    val sellOrderRequest = LimitOrderRequestModel("SELL", 4.0, 100.0, "BTCWLD", false, "", "")
     sendOrder(sellOrderRequest)
 
     fetchOrderBook("BTCWLD").onComplete() {
@@ -146,14 +145,14 @@ class TestPersistenceVerticle {
 
   @Test
   fun `test matching buy order with multiple  sell orders`(vertx: Vertx, testContext: VertxTestContext) {
-    val sellOrderRequest1 = LimitOrderRequest("SELL", 1.0, 100.0, "BTCWLD", false, "", "")
-    val sellOrderRequest2 = LimitOrderRequest("SELL", 3.0, 100.0, "BTCWLD", false, "", "")
-    val sellOrderRequest3 = LimitOrderRequest("SELL", 2.0, 100.0, "BTCWLD", false, "", "")
+    val sellOrderRequest1 = LimitOrderRequestModel("SELL", 1.0, 100.0, "BTCWLD", false, "", "")
+    val sellOrderRequest2 = LimitOrderRequestModel("SELL", 3.0, 100.0, "BTCWLD", false, "", "")
+    val sellOrderRequest3 = LimitOrderRequestModel("SELL", 2.0, 100.0, "BTCWLD", false, "", "")
     sendOrder(sellOrderRequest1)
     sendOrder(sellOrderRequest2)
     sendOrder(sellOrderRequest3)
 
-    val buyOrderRequest = LimitOrderRequest("BUY", 4.0, 100.0, "BTCWLD", false, "", "")
+    val buyOrderRequest = LimitOrderRequestModel("BUY", 4.0, 100.0, "BTCWLD", false, "", "")
     sendOrder(buyOrderRequest)
 
     fetchOrderBook("BTCWLD").onComplete() {
@@ -171,10 +170,10 @@ class TestPersistenceVerticle {
 
   @Test
   fun `test order is closed when quantity is zero`(vertx: Vertx, testContext: VertxTestContext) {
-    val sellOrderRequest = LimitOrderRequest("SELL", 1.0, 100.0, "BTCWLD", false, "", "")
+    val sellOrderRequest = LimitOrderRequestModel("SELL", 1.0, 100.0, "BTCWLD", false, "", "")
     sendOrder(sellOrderRequest)
 
-    val buyOrderRequest = LimitOrderRequest("BUY", 1.0, 100.0, "BTCWLD", false, "", "")
+    val buyOrderRequest = LimitOrderRequestModel("BUY", 1.0, 100.0, "BTCWLD", false, "", "")
     sendOrder(buyOrderRequest)
 
     fetchOrderBook("BTCWLD").onComplete() {
@@ -190,10 +189,10 @@ class TestPersistenceVerticle {
 
   @Test
   fun `test fetching orders returns only open orders`(vertx: Vertx, testContext: VertxTestContext) {
-    val buyOrderRequest = LimitOrderRequest("BUY", 1.0, 100.0, "BTCWLD", false, "", "")
+    val buyOrderRequest = LimitOrderRequestModel("BUY", 1.0, 100.0, "BTCWLD", false, "", "")
     sendOrder(buyOrderRequest)
 
-    val partialSellOrderRequest = LimitOrderRequest("SELL", 0.5, 100.0, "BTCWLD", false, "", "")
+    val partialSellOrderRequest = LimitOrderRequestModel("SELL", 0.5, 100.0, "BTCWLD", false, "", "")
     sendOrder(partialSellOrderRequest)
 
     fetchOrderBook("BTCWLD").onComplete() {
@@ -210,7 +209,7 @@ class TestPersistenceVerticle {
     }
   }
 
-  private fun sendOrder(orderRequest: LimitOrderRequest): Future<Order> {
+  private fun sendOrder(orderRequest: LimitOrderRequestModel): Future<Order> {
     return orderBookRepository.saveLimitOrder(orderRequest)
   }
 

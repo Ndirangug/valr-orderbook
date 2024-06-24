@@ -1,4 +1,4 @@
-package com.valr.exchange.orderbook.models
+package com.valr.exchange.common.models
 
 import com.valr.exchange.OrderBookActions
 import com.valr.exchange.OrderBookConsumerMessage
@@ -6,7 +6,7 @@ import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.MessageCodec
 import io.vertx.core.json.JsonObject
 
-class OrderBookConsumerMessageCodec<T>(private val payloadClass: Class<T>) : MessageCodec<OrderBookConsumerMessage<T>, OrderBookConsumerMessage<T>> {
+class EventConsumerMessageCodec<T>(private val payloadClass: Class<T>) : MessageCodec<OrderBookConsumerMessage<T>, OrderBookConsumerMessage<T>> {
 
     override fun encodeToWire(buffer: Buffer?, msg: OrderBookConsumerMessage<T>?) {
         val json = JsonObject()

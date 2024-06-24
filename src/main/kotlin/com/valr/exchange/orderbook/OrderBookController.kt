@@ -1,14 +1,11 @@
 package com.valr.exchange.orderbook
 
 import com.valr.exchange.CurrencyOrderBook
-import com.valr.exchange.orderbook.models.OrderBookConsumerPayload
+import com.valr.exchange.common.models.LimitOrderRequestModel
+import com.valr.exchange.common.models.Order
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.RoutingContext
-import com.valr.exchange.orderbook.models.OrderBookConsumerPayload.LimitOrderRequest as LimitOrderRequest
-import com.valr.exchange.orderbook.models.OrderBookConsumerPayload.Order as Order
-
-
 
 class OrderBookController(private val orderBookService: OrderBookService) {
   fun getOrderBook(context: RoutingContext) {
@@ -45,8 +42,8 @@ class OrderBookController(private val orderBookService: OrderBookService) {
   }
 
   fun submitLimitOrder(context: RoutingContext) {
-    val limitOrderRequest = context.body().asJsonObject().mapTo(LimitOrderRequest::class.java)
-    orderBookService.submitLimitOrder(limitOrderRequest).onComplete {
+    val limitOrderRequestModel = context.body().asJsonObject().mapTo(LimitOrderRequestModel::class.java)
+    orderBookService.submitLimitOrder(limitOrderRequestModel).onComplete {
        if (it.succeeded()) {
         val result = it.result() as Order
         if (result != null) {

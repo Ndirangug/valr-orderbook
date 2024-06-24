@@ -1,7 +1,7 @@
 package com.valr.exchange.auth
 
-import com.valr.exchange.auth.models.User
-import com.valr.exchange.auth.models.UserRequestModel
+import com.valr.exchange.common.models.User
+import com.valr.exchange.common.models.UserRequestModel
 import io.vertx.core.Future
 
 class UserService(private val userRepository: UserRepository) {

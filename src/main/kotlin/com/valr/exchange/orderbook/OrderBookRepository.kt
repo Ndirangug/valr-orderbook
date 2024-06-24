@@ -1,23 +1,21 @@
 package com.valr.exchange.orderbook
 
 import com.valr.exchange.*
-import com.valr.exchange.orderbook.models.OrderBookConsumerMessageCodec
-import com.valr.exchange.orderbook.models.OrderBookConsumerPayload
+import com.valr.exchange.common.models.EventConsumerPayload
+import com.valr.exchange.common.models.LimitOrderRequestModel
+import com.valr.exchange.common.models.Order
 import io.vertx.core.Future
-import com.valr.exchange.orderbook.models.OrderBookConsumerPayload.Order as Order
-import com.valr.exchange.orderbook.models.OrderBookConsumerPayload.LimitOrderRequest as LimitOrderRequest
 
 import io.vertx.core.Promise
-import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.EventBus
 
 class OrderBookRepository(val eventBus: EventBus) {
 
-  fun saveLimitOrder(orderRequest: LimitOrderRequest): Future<Order> {
+  fun saveLimitOrder(orderRequest: LimitOrderRequestModel): Future<Order> {
     val result = Promise.promise<Order>()
 
     val message = OrderBookConsumerMessage(OrderBookActions.save, orderRequest)
-    eventBus.request<OrderBookConsumerMessage<OrderBookConsumerPayload>>(
+    eventBus.request<OrderBookConsumerMessage<EventConsumerPayload>>(
       EventBusAddress.orderbook_consumer.name,
       message
     ).onComplete() {

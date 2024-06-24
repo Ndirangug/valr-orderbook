@@ -1,8 +1,8 @@
 package com.valr.exchange.orderbook
 import com.valr.exchange.CurrencyOrderBook
-import com.valr.exchange.orderbook.models.OrderBookConsumerPayload
+import com.valr.exchange.common.models.LimitOrderRequestModel
+import com.valr.exchange.common.models.Order
 import io.vertx.core.Future
-import io.vertx.core.Promise
 
 class OrderBookService(private val repository: OrderBookRepository) {
   fun getOrderBook(currencyPair: String): Future<CurrencyOrderBook> {
@@ -13,7 +13,7 @@ class OrderBookService(private val repository: OrderBookRepository) {
     return Future.future(null);
   }
 
-  fun submitLimitOrder(orderRequest: OrderBookConsumerPayload.LimitOrderRequest): Future<OrderBookConsumerPayload.Order> {
+  fun submitLimitOrder(orderRequest: LimitOrderRequestModel): Future<Order> {
     return repository.saveLimitOrder(orderRequest)
   }
 }
