@@ -1,4 +1,4 @@
-package com.valr.exchange.common.models
+package com.valr.exchange.common
 
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.eventbus.MessageCodec

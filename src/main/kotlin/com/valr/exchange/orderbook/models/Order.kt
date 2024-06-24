@@ -1,6 +1,6 @@
 package com.valr.exchange.orderbook.models
 
-import com.valr.exchange.common.models.EventConsumerPayload
+import com.valr.exchange.common.EventConsumerPayload
 
 enum class OrderSide {
   BUY,
@@ -20,7 +20,7 @@ data class Order(
   val price: Double,
   val currencyPair: String,
   val orderCount: Int,
-  val userId: String,
+  val userId: String?,
   val createdAt: Long,
   val updatedAt: Long,
   val sequenceNumber: Long,

@@ -1,9 +1,12 @@
 package com.valr.exchange
 
+import com.valr.exchange.auth.UserRepository
 import com.valr.exchange.auth.UserRouter
-import com.valr.exchange.common.models.EventConsumerMessage
-import com.valr.exchange.common.models.EventConsumerMessageCodec
-import com.valr.exchange.common.models.EventConsumerPayload
+import com.valr.exchange.common.EventConsumerMessage
+import com.valr.exchange.common.EventConsumerMessageCodec
+import com.valr.exchange.common.EventConsumerPayload
+import com.valr.exchange.common.utils.Repositories
+import com.valr.exchange.orderbook.OrderBookRepository
 import com.valr.exchange.orderbook.OrderBookRouter
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
@@ -16,9 +19,6 @@ import io.vertx.ext.auth.jwt.JWTAuthOptions
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.JWTAuthHandler
-import java.io.FileInputStream
-import java.security.KeyStore
-
 
 class HttpVerticle : AbstractVerticle() {
   companion object {
@@ -34,6 +34,9 @@ class HttpVerticle : AbstractVerticle() {
       EventConsumerMessage::class.java as Class<EventConsumerMessage<EventConsumerPayload>>,
       eventConsumerMessageCodec
     )
+
+    // Initialzie repositories
+    Repositories(vertx);
 
     //Setup JWT Auth
     val secretKey = System.getenv("JWT_SECRET") ?: throw IllegalStateException("JWT_SECRET environment variable not set")

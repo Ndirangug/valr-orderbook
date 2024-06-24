@@ -1,8 +1,8 @@
 package com.valr.exchange
 
 import com.valr.exchange.orderbook.OrderBookRepository
-import com.valr.exchange.common.models.EventConsumerPayload
-import com.valr.exchange.common.models.EventConsumerMessage
+import com.valr.exchange.common.EventConsumerPayload
+import com.valr.exchange.common.EventConsumerMessage
 import com.valr.exchange.orderbook.models.LimitOrderRequestModel
 import com.valr.exchange.orderbook.models.Order
 import io.vertx.core.Future

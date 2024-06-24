@@ -1,19 +1,20 @@
 package com.valr.exchange.auth
 
 import com.valr.exchange.EventBusAddress
-import com.valr.exchange.auth.Exceptions.DuplicateUsernameException
-import com.valr.exchange.auth.Exceptions.WrongUserNameOrPasswordException
+import com.valr.exchange.auth.exceptions.DuplicateUsernameException
+import com.valr.exchange.auth.exceptions.WrongUserNameOrPasswordException
 import com.valr.exchange.auth.models.User
 import com.valr.exchange.auth.models.UserRequestModel
-import com.valr.exchange.common.models.EventConsumerMessage
-import com.valr.exchange.common.models.EventConsumerPayload
-import com.valr.exchange.orderbook.OrderBookActions
-import com.valr.exchange.orderbook.models.Order
+import com.valr.exchange.common.EventConsumerMessage
+import com.valr.exchange.common.EventConsumerPayload
+import com.valr.exchange.common.Singleton
+import com.valr.exchange.common.exceptions.NotFoundException
+import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpStatusClass
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.ReplyException
-import java.util.*
 
 class UserRepository(val eventBus: EventBus) {
 
@@ -29,7 +30,7 @@ class UserRepository(val eventBus: EventBus) {
         result.complete(it.result().body().payload as User)
       } else {
         val cause = it.cause() as ReplyException
-        if (cause.failureCode() == 409) {
+        if (cause.failureCode() == HttpResponseStatus.CONFLICT.code()) {
           result.fail(cause.message?.let { msg -> DuplicateUsernameException(msg) })
         } else {
           result.fail(cause)
@@ -49,12 +50,35 @@ class UserRepository(val eventBus: EventBus) {
       EventBusAddress.auth_consumer.name,
       message
     ).onComplete() {
-      if (it.succeeded() && it.result().body().payload is User) {
+      if (it.succeeded()) {
         result.complete(it.result().body().payload as User)
       } else {
         val cause = it.cause() as ReplyException
-        if (cause.failureCode() == 401) {
+        if (cause.failureCode() == HttpResponseStatus.UNAUTHORIZED.code()) {
           result.fail(cause.message?.let { msg -> WrongUserNameOrPasswordException(msg) })
+        } else {
+          result.fail(cause)
+        }
+      }
+    };
+
+    return result.future();
+  }
+
+  fun getUser(username: String): Future<User?> {
+    val result = Promise.promise<User?>()
+
+    val message = EventConsumerMessage(UserActions.get_user, username)
+    eventBus.request<EventConsumerMessage<EventConsumerPayload>>(
+      EventBusAddress.auth_consumer.name,
+      message
+    ).onComplete() {
+      if (it.succeeded()) {
+        result.complete(it.result().body().payload as User)
+      } else {
+        val cause = it.cause() as ReplyException
+        if (cause.failureCode() == HttpResponseStatus.NOT_FOUND.code()) {
+          result.fail(cause.message?.let { msg -> NotFoundException(msg) })
         } else {
           result.fail(cause)
         }

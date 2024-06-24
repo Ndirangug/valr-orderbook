@@ -1,10 +1,11 @@
 package com.valr.exchange.auth
 
 import com.valr.exchange.HttpVerticle
-import com.valr.exchange.auth.Exceptions.DuplicateUsernameException
-import com.valr.exchange.auth.Exceptions.WrongUserNameOrPasswordException
+import com.valr.exchange.auth.exceptions.DuplicateUsernameException
+import com.valr.exchange.auth.exceptions.WrongUserNameOrPasswordException
 import com.valr.exchange.auth.models.User
 import com.valr.exchange.auth.models.UserRequestModel
+import io.netty.handler.codec.http.HttpResponseStatus
 import io.vertx.core.json.Json
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.auth.JWTOptions
@@ -15,11 +16,11 @@ class UserController(private val userService: UserService) {
     val user = context.body().asJsonObject().mapTo(UserRequestModel::class.java)
     userService.createUser(user).onComplete {
       if (it.succeeded()) {
-        context.response().setStatusCode(201).end(Json.encodePrettily(it.result()))
+        context.response().setStatusCode(HttpResponseStatus.CREATED.code()).end(Json.encodePrettily(it.result()))
       } else if (it.cause() is DuplicateUsernameException) {
-        context.response().setStatusCode(409).end(it.cause().message)
+        context.response().setStatusCode(HttpResponseStatus.CONFLICT.code()).end(it.cause().message)
       } else {
-        context.response().setStatusCode(500).end(it.cause().message)
+        context.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(it.cause().message)
       }
     }
   }
@@ -30,15 +31,15 @@ class UserController(private val userService: UserService) {
       if (it.succeeded()) {
         val user = (it.result() as User)
         val token = HttpVerticle.jwtAuth.generateToken(
-         JsonObject( mapOf("sub" to user.id, "name" to user.username)),
+         JsonObject( mapOf("sub" to user.id, "username" to user.username)),
           JWTOptions().setAlgorithm("HS256").setExpiresInMinutes(60)
         )
         user.authToken = token
-        context.response().setStatusCode(201).end(Json.encodePrettily(user))
+        context.response().setStatusCode(HttpResponseStatus.OK.code()).end(Json.encodePrettily(user))
       } else if (it.cause() is WrongUserNameOrPasswordException) {
-        context.response().setStatusCode(401).end(it.cause().message)
+        context.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code()).end(it.cause().message)
       } else {
-        context.response().setStatusCode(500).end(it.cause().message)
+        context.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(it.cause().message)
       }
     }
   }
@@ -47,9 +48,9 @@ class UserController(private val userService: UserService) {
   fun listAllUsers(context: RoutingContext) {
     userService.listAllUsers().onComplete {
       if (it.succeeded()) {
-        context.response().setStatusCode(201).end(Json.encodePrettily(it.result()))
+        context.response().setStatusCode(HttpResponseStatus.OK.code()).end(Json.encodePrettily(it.result()))
       }  else {
-        context.response().setStatusCode(500).end(it.cause().message)
+        context.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(it.cause().message)
       }
     }
   }

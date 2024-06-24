@@ -1,14 +1,16 @@
 package com.valr.exchange
 
-import com.valr.exchange.auth.Exceptions.DuplicateUsernameException
 import com.valr.exchange.auth.UserActions
 import com.valr.exchange.auth.models.User
 import com.valr.exchange.auth.models.UserRequestModel
-import com.valr.exchange.common.models.*
+import com.valr.exchange.common.EventConsumerMessage
+import com.valr.exchange.common.EventConsumerPayload
 import com.valr.exchange.orderbook.OrderBookActions
 import com.valr.exchange.orderbook.models.LimitOrderRequestModel
 import com.valr.exchange.orderbook.models.Order
+import com.valr.exchange.orderbook.models.OrderHistoryRequestModel
 import com.valr.exchange.orderbook.models.OrderSide
+import io.netty.handler.codec.http.HttpResponseStatus
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
 import io.vertx.core.eventbus.EventBus
@@ -60,7 +62,7 @@ class PersistenceVerticle : AbstractVerticle() {
               message.reply(EventConsumerMessage(action = UserActions.signup, newUser))
             } else {
               message.fail(
-                409,
+                HttpResponseStatus.CONFLICT.code(),
                 "User with username ${userRequest.username} already exists"
               )
             }
@@ -72,19 +74,28 @@ class PersistenceVerticle : AbstractVerticle() {
               users.containsKey(userRequest.username) && users[userRequest.username]?.password == userRequest.password
             val user = users[userRequest.username]
 
-            if(userFound){
+            if (userFound) {
               message.reply(EventConsumerMessage(action = UserActions.login, user))
-            }else{
-              message.fail(401, "Wrong username or password")
+            } else {
+              message.fail(HttpResponseStatus.UNAUTHORIZED.code(), "Wrong username or password")
             }
           }
 
           UserActions.fetch_users -> {
-            val usersList = users.values.toList().map { user-> User(id = user.id, username = user.username) }
+            val usersList = users.values.toList().map { user -> User(id = user.id, username = user.username) }
             message.reply(EventConsumerMessage(action = UserActions.fetch_users, usersList))
           }
 
-          else -> {}
+          UserActions.get_user -> {
+            val username = message.body().payload as String
+            val user = users[username]
+
+            if (user != null) {
+              message.reply(EventConsumerMessage(action = UserActions.get_user, user))
+            } else {
+              message.fail(HttpResponseStatus.NOT_FOUND.code(), "User with ${username} not found")
+            }
+          }
         }
       }
     }
@@ -106,7 +117,7 @@ class PersistenceVerticle : AbstractVerticle() {
               price = orderRequest.price,
               currencyPair = orderRequest.pair,
               orderCount = 0,
-              userId = "",
+              userId = orderRequest.userId,
               createdAt = Instant.now().toEpochMilli(),
               updatedAt = Instant.now().toEpochMilli(),
               sequenceNumber = ++sequenceIdAccumulator,
@@ -125,18 +136,43 @@ class PersistenceVerticle : AbstractVerticle() {
           OrderBookActions.fetch_orderbook -> {
             val currencyPair = message.body().payload as String
             val currencyOrderBook = orderbook[currencyPair]
-            val filteredOrderBook =
-              hashMapOf<String, Any>(
-                "Asks" to (currencyOrderBook?.get("Asks") as OrdersList).filter { it -> it.isOpen },
-                "Bids" to (currencyOrderBook?.get("Bids") as OrdersList).filter { it -> it.isOpen },
-                "SequenceNumber" to currencyOrderBook?.get("SequenceNumber") as Long,
-                "LastChange" to currencyOrderBook?.get("LastChange") as Long,
-              )
 
-            message.reply(EventConsumerMessage(action = OrderBookActions.fetch_orderbook, filteredOrderBook))
+            if (currencyOrderBook != null) {
+              val filteredOrderBook =
+                hashMapOf<String, Any>(
+                  "Asks" to (currencyOrderBook?.get("Asks") as OrdersList).filter { it -> it.isOpen },
+                  "Bids" to (currencyOrderBook?.get("Bids") as OrdersList).filter { it -> it.isOpen },
+                  "SequenceNumber" to currencyOrderBook?.get("SequenceNumber") as Long,
+                  "LastChange" to currencyOrderBook?.get("LastChange") as Long,
+                )
+
+              message.reply(EventConsumerMessage(action = OrderBookActions.fetch_orderbook, filteredOrderBook))
+            } else {
+              message.fail(
+                HttpResponseStatus.NOT_FOUND.code(),
+                "OrderBook for currencypair $currencyPair does not exists"
+              )
+            }
           }
 
-          else -> {}
+          OrderBookActions.fetch_orderhistory -> {
+            val orderHistoryRequestModel = message.body().payload as OrderHistoryRequestModel
+            val currencyPair = orderHistoryRequestModel.currencyPair;
+
+            if (orderbook.containsKey(currencyPair)) {
+              val asks =
+                orderbook[currencyPair]?.get("Asks") as OrdersList
+              val bids = orderbook[currencyPair]?.get("Bids") as OrdersList
+              val userOrders = (asks + bids).filter { it -> it.userId == orderHistoryRequestModel.userId }
+
+              message.reply(EventConsumerMessage(action = OrderBookActions.fetch_orderhistory, userOrders))
+            } else {
+              message.fail(
+                HttpResponseStatus.NOT_FOUND.code(),
+                "OrderBook for currencypair $currencyPair does not exists"
+              )
+            }
+          }
         }
       }
     }

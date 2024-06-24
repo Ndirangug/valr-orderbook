@@ -1,11 +1,14 @@
 package com.valr.exchange.orderbook
 
 import com.valr.exchange.CurrencyOrderBook
+import com.valr.exchange.common.exceptions.NotFoundException
+import com.valr.exchange.common.utils.getCurrentUser
 import com.valr.exchange.orderbook.models.LimitOrderRequestModel
 import com.valr.exchange.orderbook.models.Order
+import io.netty.handler.codec.http.HttpResponseStatus
 import io.vertx.core.json.Json
-import io.vertx.core.json.JsonObject
 import io.vertx.ext.web.RoutingContext
+
 
 class OrderBookController(private val orderBookService: OrderBookService) {
   fun getOrderBook(context: RoutingContext) {
@@ -15,44 +18,68 @@ class OrderBookController(private val orderBookService: OrderBookService) {
         val result = it.result() as CurrencyOrderBook?
         if (result != null) {
           context.response().end(Json.encode(result))
-        } else {
-          val response = JsonObject().put("error", "orderbook for $currencyPair not found")
-          context.response().setStatusCode(404).end(Json.encode(response))
         }
-      } else {
-        context.response().setStatusCode(500).end(Json.encode(it.cause()))
-      }
+      } else if (it.cause() is NotFoundException) {
+          context.response().setStatusCode(HttpResponseStatus.NOT_FOUND.code())
+            .end(Json.encode("orderbook for $currencyPair not found"))
+        } else {
+          context.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end(Json.encode(it.cause()))
+        }
+
     }
   }
 
   fun getTradeHistory(context: RoutingContext) {
     val currencyPair = context.request().getParam("currencyPair")
-    orderBookService.getTradeHistory(currencyPair).onComplete {
-       if (it.succeeded()) {
-        val result = it.result()
-        if (result != null) {
-          context.response().end(Json.encode(result))
-        } else {
-          context.response().setStatusCode(404).end()
-        }
-      } else {
-        context.response().setStatusCode(500).end(Json.encode(it.cause()))
+
+    getCurrentUser(context).onComplete() {
+      val user = it.result()
+      if (user == null) {
+        context.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code()).end()
       }
+
+      orderBookService.getTradeHistory(user!!.id, currencyPair).onComplete {
+        if (it.succeeded()) {
+          val result = it.result()
+          if (result != null) {
+            context.response().end(Json.encode(result))
+          }
+        } else if (it.cause() is NotFoundException) {
+            context.response().setStatusCode(HttpResponseStatus.NOT_FOUND.code())
+              .end(Json.encode("orderbook for $currencyPair not found"))
+          } else {
+            context.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+              .end(Json.encode(it.cause()))
+          }
+      }
+
     }
   }
 
   fun submitLimitOrder(context: RoutingContext) {
-    val limitOrderRequestModel = context.body().asJsonObject().mapTo(LimitOrderRequestModel::class.java)
-    orderBookService.submitLimitOrder(limitOrderRequestModel).onComplete {
-       if (it.succeeded()) {
-        val result = it.result() as Order
-        if (result != null) {
-          context.response().setStatusCode(201).end(Json.encode(result))
+    var limitOrderRequestModel = context.body().asJsonObject().mapTo(LimitOrderRequestModel::class.java)
+
+    getCurrentUser(context).onComplete() { ar ->
+      val user = ar.result()
+      if (user == null) {
+        context.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code()).end()
+      }
+
+      limitOrderRequestModel.userId = user!!.id
+
+      orderBookService.submitLimitOrder(limitOrderRequestModel).onComplete {
+        if (it.succeeded()) {
+          val result = it.result() as Order
+          if (result != null) {
+            context.response().setStatusCode(HttpResponseStatus.ACCEPTED.code()).end(Json.encode(result))
+          } else {
+            context.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+              .end(Json.encode(it.cause()))
+          }
         } else {
-          context.response().setStatusCode(500).end(Json.encode(it.cause()))
+          context.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code())
+            .end(Json.encode(it.cause()))
         }
-      } else {
-        context.response().setStatusCode(500).end(Json.encode(it.cause()))
       }
     }
   }

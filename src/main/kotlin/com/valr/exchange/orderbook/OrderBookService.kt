@@ -9,8 +9,8 @@ class OrderBookService(private val repository: OrderBookRepository) {
     return repository.getOrderBook(currencyPair);
   }
 
-  fun getTradeHistory(currencyPair: String): Future<Void> {
-    return Future.future(null);
+  fun getTradeHistory(userId: String, currencyPair: String): Future<List<Order>> {
+    return repository.getOrderHistory(userId, currencyPair);
   }
 
   fun submitLimitOrder(orderRequest: LimitOrderRequestModel): Future<Order> {

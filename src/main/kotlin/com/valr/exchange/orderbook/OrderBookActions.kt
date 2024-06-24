@@ -1,6 +1,6 @@
 package com.valr.exchange.orderbook
 
-import com.valr.exchange.common.models.EventActions
+import com.valr.exchange.common.EventActions
 
 class OrderBookActions: EventActions() {
   companion object{

@@ -1,16 +1,15 @@
 package com.valr.exchange.auth
 
+import com.valr.exchange.common.utils.Repositories
 import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
-import io.vertx.ext.web.handler.BodyHandler
 
 class UserRouter(vertx: Vertx) {
   val router: Router = Router.router(vertx)
 
   init {
-    router.route().handler(BodyHandler.create())
+    val userController = UserController(UserService(Repositories.userRepository))
 
-    val userController = UserController(UserService(UserRepository(vertx.eventBus())))
     router.post("/login").handler(userController::login)
     router.post("/signup").handler(userController::createUser)
     router["/users/all"].handler(userController::listAllUsers)
