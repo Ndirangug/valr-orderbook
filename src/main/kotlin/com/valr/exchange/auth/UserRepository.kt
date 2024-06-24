@@ -57,7 +57,6 @@ class UserRepository(val eventBus: EventBus) {
           result.fail(cause.message?.let { msg -> WrongUserNameOrPasswordException(msg) })
         } else {
           result.fail(cause)
-
         }
       }
     };
