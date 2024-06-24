@@ -222,6 +222,8 @@ class PersistenceVerticle : AbstractVerticle() {
           order.quantity -= quantityToTrade;
           sellOrder.quantity -= quantityToTrade;
         }
+        order.updatedAt = Instant.now().toEpochMilli()
+        sellOrder.updatedAt = Instant.now().toEpochMilli()
         if (order.quantity.toInt() == 0) break
       }
     } else {
@@ -238,6 +240,8 @@ class PersistenceVerticle : AbstractVerticle() {
           order.quantity -= quantityToTrade;
           buyOrder.quantity -= quantityToTrade;
         }
+        order.updatedAt = Instant.now().toEpochMilli()
+        buyOrder.updatedAt = Instant.now().toEpochMilli()
         if (order.quantity.toInt() == 0) break
       }
     }

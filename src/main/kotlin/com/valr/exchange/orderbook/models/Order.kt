@@ -22,7 +22,7 @@ data class Order(
   val orderCount: Int,
   val userId: String?,
   val createdAt: Long,
-  val updatedAt: Long,
+  var updatedAt: Long,
   val sequenceNumber: Long,
 ) : EventConsumerPayload() {
   val isOpen: Boolean
