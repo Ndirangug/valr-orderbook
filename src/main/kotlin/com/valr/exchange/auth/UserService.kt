@@ -5,11 +5,15 @@ import com.valr.exchange.auth.models.UserRequestModel
 import io.vertx.core.Future
 
 class UserService(private val userRepository: UserRepository) {
-    fun createUser(user: UserRequestModel): Future<User> {
-        return userRepository.save(user)
-    }
+  fun createUser(user: UserRequestModel): Future<User> {
+    return userRepository.saveUser(user)
+  }
 
-    fun getUser(userId: String): Future<User?> {
-        return userRepository.findById(userId)
-    }
+  fun login(user: UserRequestModel): Future<User> {
+    return userRepository.login(user)
+  }
+
+  fun listAllUsers(): Future<List<User>> {
+    return userRepository.getAllUsers()
+  }
 }

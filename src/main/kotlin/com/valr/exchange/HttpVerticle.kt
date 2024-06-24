@@ -34,7 +34,7 @@ class HttpVerticle : AbstractVerticle() {
     val userRouter = UserRouter(vertx).getUserRouter()
     val orderBookRouter = OrderBookRouter(vertx).getOrderBookRouter()
 
-    baseRouter.mountSubRouter("/api/v1/user", userRouter)
+    baseRouter.mountSubRouter("/api/v1", userRouter)
     baseRouter.mountSubRouter("/api/v1", orderBookRouter)
 
     //Setup JWT Auth

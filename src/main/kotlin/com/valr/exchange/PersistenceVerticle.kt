@@ -1,5 +1,6 @@
 package com.valr.exchange
 
+import com.valr.exchange.auth.Exceptions.DuplicateUsernameException
 import com.valr.exchange.auth.UserActions
 import com.valr.exchange.auth.models.User
 import com.valr.exchange.auth.models.UserRequestModel
@@ -15,7 +16,7 @@ import java.time.Instant
 import java.util.*
 import kotlin.collections.HashMap
 
-
+typealias UserssStore = HashMap<String, User>
 typealias OrderBooksStore = HashMap<String, HashMap<String, Any>>
 typealias OrdersList = MutableList<Order>
 typealias CurrencyOrderBook = HashMap<String, Any>
@@ -26,7 +27,7 @@ enum class EventBusAddress {
 }
 
 class PersistenceVerticle : AbstractVerticle() {
-  val users: MutableList<User> = mutableListOf()
+  val users: UserssStore = hashMapOf()
   val orderbook: OrderBooksStore = hashMapOf()
   var sequenceIdAccumulator: Long = 0;
 
@@ -48,26 +49,39 @@ class PersistenceVerticle : AbstractVerticle() {
         when (message.body().action) {
           UserActions.signup -> {
             val userRequest = message.body().payload as UserRequestModel
-            val newUser = User(
-              id = generateUUID(),
-              username = userRequest.username,
-              password = userRequest.password,
-            );
 
-            users.add(newUser)
-
-            message.reply(EventConsumerMessage(action = UserActions.signup, newUser))
+            if (!users.containsKey(userRequest.username)) {
+              val newUser = User(
+                id = generateUUID(),
+                username = userRequest.username,
+                password = userRequest.password,
+              );
+              users[newUser.username] = newUser
+              message.reply(EventConsumerMessage(action = UserActions.signup, newUser))
+            } else {
+              message.fail(
+                409,
+                "User with username ${userRequest.username} already exists"
+              )
+            }
           }
 
           UserActions.login -> {
             val userRequest = message.body().payload as UserRequestModel
-            val userExists =
-              users.any { user -> user.username == userRequest.username && user.password == userRequest.password }
-            message.reply(EventConsumerMessage(action = UserActions.login, userExists))
+            val userFound =
+              users.containsKey(userRequest.username) && users[userRequest.username]?.password == userRequest.password
+            val user = users[userRequest.username]
+
+            if(userFound){
+              message.reply(EventConsumerMessage(action = UserActions.login, user))
+            }else{
+              message.fail(401, "Wrong username or password")
+            }
           }
 
           UserActions.fetch_users -> {
-            message.reply(EventConsumerMessage(action = UserActions.fetch_users, users))
+            val usersList = users.values.toList().map { user-> User(id = user.id, username = user.username) }
+            message.reply(EventConsumerMessage(action = UserActions.fetch_users, usersList))
           }
 
           else -> {}
