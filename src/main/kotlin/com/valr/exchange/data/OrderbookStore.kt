@@ -18,6 +18,15 @@ typealias OrderBooksMap = HashMap<String, HashMap<String, Any>>
 typealias OrdersList = MutableList<Order>
 typealias CurrencyOrderBook = HashMap<String, Any>
 
+fun OrdersList.withCount(): OrdersList {
+  return this.groupBy { it.price }
+    .map { (_, ordersAtPrice) ->
+      val firstOrder = ordersAtPrice.first()
+      firstOrder.copy(orderCount = ordersAtPrice.size)
+    }
+    .toMutableList()
+}
+
 class OrderbookStore(val eventBus: EventBus) {
   val orderbook: OrderBooksMap = hashMapOf()
   var sequenceIdAccumulator: Long = 0;
