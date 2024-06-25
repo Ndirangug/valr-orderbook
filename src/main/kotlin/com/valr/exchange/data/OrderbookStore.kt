@@ -104,13 +104,6 @@ class OrderbookStore(val eventBus: EventBus) {
     }
   }
 
-
-  private fun addOrderToSortedList(sortedList: MutableList<Order>, newOrder: Order) {
-    val index = sortedList.binarySearch { o -> -o.price.compareTo(newOrder.price) }
-    val insertIndex = if (index < 0) -index - 1 else index
-    sortedList.add(insertIndex, newOrder)
-  }
-
   private fun addOrderToMap(currencyPair: String, newOrder: Order) {
     orderbook.putIfAbsent(currencyPair, hashMapOf("Asks" to mutableListOf<Order>(), "Bids" to mutableListOf<Order>()))
     val key = if (newOrder.side == OrderSide.BUY) "Bids" else "Asks";
@@ -121,8 +114,10 @@ class OrderbookStore(val eventBus: EventBus) {
     orderbook[currencyPair]?.put("SequenceNumber", newOrder.sequenceNumber);
   }
 
-  companion object {
-
+  private fun addOrderToSortedList(sortedList: MutableList<Order>, newOrder: Order) {
+    val index = sortedList.binarySearch { o -> -o.price.compareTo(newOrder.price) }
+    val insertIndex = if (index < 0) -index - 1 else index
+    sortedList.add(insertIndex, newOrder)
   }
 
   private fun matchOrder(order: Order): Order {
