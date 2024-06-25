@@ -29,7 +29,7 @@ class UserController(private val userService: UserService) {
     val user = context.body().asJsonObject().mapTo(UserRequestModel::class.java)
     userService.login(user).onComplete {
       if (it.succeeded()) {
-        val user = (it.result() as User)
+        val user = (it.result())
         val token = HttpVerticle.jwtAuth.generateToken(
          JsonObject( mapOf("sub" to user.id, "username" to user.username)),
           JWTOptions().setAlgorithm("HS256").setExpiresInMinutes(60)
