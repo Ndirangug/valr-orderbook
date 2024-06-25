@@ -1,10 +1,8 @@
 package com.valr.exchange
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+
+import com.valr.exchange.api.HttpVerticle
 import io.vertx.core.*
-import io.vertx.core.json.Json
-import io.vertx.core.json.JsonObject
 
 class MainVerticle : AbstractVerticle() {
 

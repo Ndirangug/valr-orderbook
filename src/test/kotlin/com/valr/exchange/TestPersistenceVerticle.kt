@@ -1,10 +1,12 @@
 package com.valr.exchange
 
-import com.valr.exchange.orderbook.OrderBookRepository
-import com.valr.exchange.common.EventConsumerPayload
-import com.valr.exchange.common.EventConsumerMessage
-import com.valr.exchange.orderbook.models.LimitOrderRequestModel
-import com.valr.exchange.orderbook.models.Order
+import com.valr.exchange.api.HttpVerticle
+import com.valr.exchange.api.common.EventConsumerMessage
+import com.valr.exchange.api.common.EventConsumerPayload
+import com.valr.exchange.api.orderbook.OrderBookRepository
+import com.valr.exchange.api.orderbook.models.LimitOrderRequestModel
+import com.valr.exchange.data.CurrencyOrderBook
+import com.valr.exchange.data.OrdersList
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxExtension
@@ -210,7 +212,7 @@ class TestPersistenceVerticle {
     }
   }
 
-  private fun sendOrder(orderRequest: LimitOrderRequestModel): Future<Order> {
+  private fun sendOrder(orderRequest: LimitOrderRequestModel): Future<com.valr.exchange.api.orderbook.models.Order> {
     return orderBookRepository.saveLimitOrder(orderRequest)
   }
 
