@@ -1,7 +1,6 @@
 package com.valr.exchange.api.orderbook.models
 
-import java.time.Instant
-import java.time.format.DateTimeFormatter
+import com.valr.exchange.api.common.utils.dateTimeStringFromTimeStamp
 
 data class TradeHistoryItemResponseModel(
   val quantity: Double,
@@ -20,9 +19,7 @@ data class TradeHistoryItemResponseModel(
         quantity = order.quantity,
         price = order.price,
         currencyPair = order.currencyPair,
-        tradedAt = DateTimeFormatter.ISO_INSTANT.format(
-          Instant.ofEpochMilli(order.updatedAt)
-        ),
+        tradedAt = dateTimeStringFromTimeStamp(order.updatedAt),
         sequenceId = order.sequenceNumber,
         id = order.id,
         quoteVolume = order.price * order.quantity

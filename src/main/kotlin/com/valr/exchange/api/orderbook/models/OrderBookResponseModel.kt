@@ -1,9 +1,8 @@
 package com.valr.exchange.api.orderbook.models
 
+import com.valr.exchange.api.common.utils.dateTimeStringFromTimeStamp
 import com.valr.exchange.data.CurrencyOrderBook
 import com.valr.exchange.data.OrdersList
-import java.time.Instant
-import java.time.format.DateTimeFormatter
 
 data class OrderBookResponseModel(
   val asks: List<OrderBookEntryResponseMddel>,
@@ -19,9 +18,7 @@ data class OrderBookResponseModel(
       return OrderBookResponseModel(
         asks = asks,
         bids = bids,
-        lastChange = DateTimeFormatter.ISO_INSTANT.format(
-          Instant.ofEpochMilli(orderbook["LastChange"] as Long)
-        ),
+        lastChange = dateTimeStringFromTimeStamp(orderbook["LastChange"] as Long),
         sequenceNumber = orderbook["SequenceNumber"] as Long
       )
     }
