@@ -7,15 +7,16 @@ enum class OrderSide {
   SELL;
 
   companion object {
-    fun fromName(side: String): com.valr.exchange.api.orderbook.models.OrderSide {
-      return com.valr.exchange.api.orderbook.models.OrderSide.valueOf(side.uppercase())
+    fun fromName(side: String): OrderSide {
+      return OrderSide.valueOf(side.uppercase())
     }
   }
 }
 
 data class Order(
     val id: String,
-    val side: com.valr.exchange.api.orderbook.models.OrderSide,
+    val side: OrderSide,
+    var takerSide: OrderSide? = null,
     var quantity: Double,
     val price: Double,
     val currencyPair: String,

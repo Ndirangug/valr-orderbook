@@ -5,14 +5,13 @@ import com.valr.exchange.api.common.EventConsumerPayload
 import com.valr.exchange.api.orderbook.OrderBookActions
 import com.valr.exchange.api.orderbook.models.LimitOrderRequestModel
 import com.valr.exchange.api.orderbook.models.Order
-import com.valr.exchange.api.orderbook.models.OrderHistoryRequestModel
+import com.valr.exchange.api.orderbook.models.TradeHistoryRequestModel
 import com.valr.exchange.api.orderbook.models.OrderSide
 import com.valr.exchange.data.common.EventBusAddress
 import com.valr.exchange.data.common.generateUUID
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.vertx.core.eventbus.EventBus
 import java.time.Instant
-import java.util.*
 import kotlin.collections.HashMap
 
 typealias OrderBooksMap = HashMap<String, HashMap<String, Any>>
@@ -82,14 +81,14 @@ class OrderbookStore(val eventBus: EventBus) {
           }
 
           OrderBookActions.fetch_orderhistory -> {
-            val orderHistoryRequestModel = message.body().payload as OrderHistoryRequestModel
-            val currencyPair = orderHistoryRequestModel.currencyPair;
+            val tradeHistoryRequestModel = message.body().payload as TradeHistoryRequestModel
+            val currencyPair = tradeHistoryRequestModel.currencyPair;
 
             if (orderbook.containsKey(currencyPair)) {
               val asks =
                 orderbook[currencyPair]?.get("Asks") as OrdersList
               val bids = orderbook[currencyPair]?.get("Bids") as OrdersList
-              val userOrders = (asks + bids).filter { it -> it.userId == orderHistoryRequestModel.userId }
+              val userOrders = (asks + bids).filter { it -> it.userId == tradeHistoryRequestModel.userId }
 
               message.reply(EventConsumerMessage(action = OrderBookActions.fetch_orderhistory, userOrders))
             } else {
@@ -122,6 +121,7 @@ class OrderbookStore(val eventBus: EventBus) {
 
   private fun matchOrder(order: Order): Order {
     if (order.side == OrderSide.BUY) {
+      order.takerSide = OrderSide.SELL;
       //check the lowest price sell order whose price is less than or equal to this order
       //iterate through as many of these as you find
       //for each of those sell orders, check the quantity on offer
@@ -146,6 +146,7 @@ class OrderbookStore(val eventBus: EventBus) {
         if (order.quantity.toInt() == 0) break
       }
     } else {
+      order.takerSide = OrderSide.BUY;
       val matchingBuyOrders = ((orderbook[order.currencyPair]?.get("Bids")
         ?: mutableListOf<Order>()) as OrdersList).filter { it -> it.price >= order.price && it.isOpen }
 

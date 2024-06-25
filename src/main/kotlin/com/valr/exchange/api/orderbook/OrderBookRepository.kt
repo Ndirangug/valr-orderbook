@@ -4,7 +4,7 @@ import com.valr.exchange.api.common.EventConsumerMessage
 import com.valr.exchange.api.common.EventConsumerPayload
 import com.valr.exchange.api.common.exceptions.NotFoundException
 import com.valr.exchange.api.orderbook.models.LimitOrderRequestModel
-import com.valr.exchange.api.orderbook.models.OrderHistoryRequestModel
+import com.valr.exchange.api.orderbook.models.TradeHistoryRequestModel
 import com.valr.exchange.data.CurrencyOrderBook
 import com.valr.exchange.data.common.EventBusAddress
 import io.netty.handler.codec.http.HttpResponseStatus
@@ -62,7 +62,7 @@ class OrderBookRepository(val eventBus: EventBus) {
     val result = Promise.promise<List<com.valr.exchange.api.orderbook.models.Order>>()
 
     val message =
-      EventConsumerMessage(OrderBookActions.fetch_orderhistory, OrderHistoryRequestModel(userId, currencyPair))
+      EventConsumerMessage(OrderBookActions.fetch_orderhistory, TradeHistoryRequestModel(userId, currencyPair))
     eventBus.request<EventConsumerMessage<String>>(
       EventBusAddress.orderbook_consumer.name,
       message
