@@ -4,7 +4,14 @@ image:https://img.shields.io/badge/vert.x-4.5.8-purple.svg[link="https://vertx.i
 
 Implementation of an In-memory order book to place a limit order with order matching
 
+
 image::https://run.pstmn.io/button.svg[link="https://app.getpostman.com/run-collection/12430811-e01b783f-95e9-4208-bda2-6e3340e0ac18?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D12430811-e01b783f-95e9-4208-bda2-6e3340e0ac18%26entityType%3Dcollection%26workspaceId%3Dbb8578e1-2424-4f56-82a5-a5dabc644158"]
+
+
+For your convenience, I added a 'RUN IN POSTMAN' button on the README.
+Also, I did implement jwt authentication, so to test the API you'll first have to visit the signup route and create a user, then go to the login route and log in. I set up a postman script that will pick the authToken and add it to every other request after you've logged in. So after logging in successfully, you can test out the other routes.
+
+One feature I wanted to implement but had to leave out was request validation. The three weeks given for the assessment were more than enough, but due to my schedule, I was constrained on time. I have however satisfied all the core requirements and bonus items. I'd be happy to go over any additional thing I've left out and take you through how I would have done it over a call.
 
 This application was generated using http://start.vertx.io
 
